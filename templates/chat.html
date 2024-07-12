@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Chat
+{% endblock %}
+
+{% block main %}
+
+<nav>
+    <a href="/">Back</a>
+</nav>
+
+<div id="messages">
+
+</div>
+
+<form action="/send" id="chatbox">
+    <input type="text" name="message">
+    <button type="submit">Send</button>
+</form>
+
+{% endblock %}

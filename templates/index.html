@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block main %}
+
+<nav>
+    <a href="/settings">Settings</a>
+</nav>
+<div id="chats">
+    {% for chat in chats %}
+        <a class="chat" href="/{{ chat['id'] }}">
+            <div>Chat Name: {{ chat["name"] }}</div>
+            <div>Members: 
+                {% for member in chat["members"] %}
+                    {{ member[0] }} 
+                {% endfor %}
+            </div>
+        </a>
+    {% endfor %}
+</div>
+
+<form action=""></form>
+
+<script src="../static/main.js"></script>
+{% endblock %}
