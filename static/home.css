@@ -1,0 +1,25 @@
+#chats {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 40px;
+}
+#chats > hr {
+    width: 100%;
+}
+.chat {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* settings tab */
+#options {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    gap: 20px;
+}

@@ -1,5 +1,9 @@
 {% extends "layout.html" %}
 
+{% block stylesheet %}
+    <link rel="stylesheet" href="../static/home.css">
+{% endblock %}
+
 {% block title %}
     Home
 {% endblock %}
@@ -8,6 +12,8 @@
 
 <nav>
     <a href="/settings">Settings</a>
+    <a href="/logout">Logout</a>
+    <a href="/new_chat">New Chat</a>
 </nav>
 <div id="chats">
     {% for chat in chats %}
@@ -19,10 +25,8 @@
                 {% endfor %}
             </div>
         </a>
+        <hr>
     {% endfor %}
 </div>
 
-<form action=""></form>
-
-<script src="../static/main.js"></script>
 {% endblock %}

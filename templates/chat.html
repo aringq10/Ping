@@ -1,22 +1,71 @@
 {% extends "layout.html" %}
 
+{% block script %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script src="../static/chat.js" defer></script>
+{% endblock %}
+{% block stylesheet %}
+    <link rel="stylesheet" href="../static/chat.css">
+{% endblock %}
+
 {% block title %}
     Chat
 {% endblock %}
 
 {% block main %}
+<div id="chat">
+    <nav>
+        <a href="/">Back</a>
+        <button id="chatSettings">Chat Settings</button>
+    </nav>
+    <div id="wrapper">
+        <div id="messages">
+            {% for message in messages %}
+                {% if message[0] == username %}
+                    {% set divClass = 'right' %}
+                {% elif message[0] == 'Server' %}
+                    {% set divClass = 'middle' %}
+                    {% set serverVar = 'server' %}
+                {% else %}
+                    {% set divClass = 'left' %}
+                {% endif %}
+                <div class="message {{ divClass }}">
+                    <div class="messageBox {{ serverVar }}"><b>{{ message[0] }}:</b> {{ message[1] }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 
-<nav>
-    <a href="/">Back</a>
-</nav>
+    <form id="chatbox" method="post">
+        <textarea id="input" autocomplete="off" autofocus></textarea>
+        <button type="submit">Send</button>
+    </form>
 
-<div id="messages">
-
+    <input id = "username" type="hidden" value="{{ username }}">
 </div>
 
-<form action="/send" id="chatbox">
-    <input type="text" name="message">
-    <button type="submit">Send</button>
-</form>
+<div id="settings">
+    <nav>
+        <button id="back">Back</button>
+    </nav>
+    
+    <h1>Leave Chat</h1>
+    <form method="post" id="leave">
+        <button type="submit">Leave Chat</button>
+    </form>
+
+    <h1>Add user to groupchat</h1>
+    <form method="post" id="add_user">
+        <input type="text" id="user_id" placeholder="User ID" autocomplete="off">
+        <button type="submit">Add User</button>
+        <div class="error" id="error_add"></div>
+    </form>
+    <h1>Change chat name</h1>
+    <form method="post" id="change_chat_name">
+        <input type="text" id="chat_name" placeholder="New Name" autocomplete="off">
+        <button type="submit">Change chat name</button>
+        <div class="error" id="error_change"></div>
+    </form>
+</div>
 
 {% endblock %}
