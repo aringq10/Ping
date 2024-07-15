@@ -22,7 +22,7 @@
 
     {% if type == 'login' %}
         <form action="/login" method="post">
-            <input type="text" name="username" placeholder="Username" autocomplete="off">
+            <input type="text" name="username" placeholder="Username" autocomplete="off" autofocus>
             <input type="password" name="password" placeholder="Password">
             <button type="submit">Login</button>
             {% if error %}
@@ -32,7 +32,7 @@
         </form>
     {% elif type == 'register' %}
         <form action="/register" method="post">
-            <input type="text" name="username" placeholder="Username" autocomplete="off">
+            <input type="text" name="username" placeholder="Username" autocomplete="off" autofocus>
             <input type="password" name="password" placeholder="Password">
             <input type="password" name="confirmation" placeholder="Repeat Password">
             <button type="submit">Register</button>
@@ -43,7 +43,7 @@
         </form>
     {% elif type == 'change_password' %}
         <form action="/change_password" method="post">
-            <input type="password" name="old_password" placeholder="Old password">
+            <input type="password" name="old_password" placeholder="Old password" autofocus>
             <input type="password" name="new_password" placeholder="New password">
             <input type="password" name="confirmation" placeholder="Repeat new password">
             <button type="submit">Change Password</button>
@@ -54,7 +54,7 @@
 
     {% elif type == 'change_username' %}
         <form action="/change_username" method="post">
-            <input type="text" name="new_username" placeholder="New username" autocomplete="off">
+            <input type="text" name="new_username" placeholder="New username" autocomplete="off" autofocus>
             <input type="password" name="password" placeholder="Password">
             <input type="password" name="confirmation" placeholder="Repeat Password">
             <button type="submit">Change Username</button>

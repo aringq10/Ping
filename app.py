@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from datetime import timedelta
+import datetime
 import json
 import sqlite3
 from flask import Flask, flash, redirect, render_template, request, session
@@ -8,7 +8,7 @@ from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_socketio import SocketIO, send, emit
 
-from helpers import login_required
+from helpers import login_required, init_db, format_date
 
 # Configure app and SocketIO
 app = Flask(__name__)
@@ -22,7 +22,7 @@ Session(app)
 @app.before_request
 def make_session_permanent():
     session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=30)
+    app.permanent_session_lifetime = datetime.timedelta(minutes=30)
 
 @app.after_request
 def after_request(response):
@@ -41,11 +41,17 @@ def index():
 
     with sqlite3.connect("app.db") as conn:
             db = conn.cursor()
-            db.execute("SELECT id, name FROM chats WHERE id IN(SELECT chat_id FROM members WHERE user_id = ?)", (session["user_id"],))
+            db.execute('''SELECT id, name FROM chats 
+                        WHERE id IN
+                        (SELECT chat_id FROM members WHERE user_id = ?)''', 
+                        (session["user_id"],))
             chats = db.fetchall()
             
             for chat in chats:
-                db.execute("SELECT username FROM users WHERE id IN(SELECT user_id FROM members WHERE chat_id = ?)", (chat[0],))
+                db.execute('''SELECT username FROM users 
+                            WHERE id IN
+                            (SELECT user_id FROM members WHERE chat_id = ?)''', 
+                            (chat[0],))
                 members = db.fetchall()
                 chats_processed.append({
                     "id": chat[0],
@@ -70,7 +76,9 @@ def login():
         # Ensure everything was submitted
         if not username or not password:
             print("Missing inputs")
-            return render_template("form.html", type="login", error="Missing Inputs")
+            return render_template("form.html", 
+                                    type="login", 
+                                    error="Missing Inputs")
 
         # Query database for username
         with sqlite3.connect("app.db") as conn:
@@ -81,7 +89,9 @@ def login():
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0][2], password):
             print("invalid username")
-            return render_template("form.html", type="login", error="Invalid Username or Password")
+            return render_template("form.html", 
+                                    type="login", 
+                                    error="Invalid Username or Password")
 
         # Remember which user has logged in
         session["user_id"] = rows[0][0]
@@ -102,11 +112,15 @@ def register():
     if request.method == "POST":
         # Ensure everything was submitted
         if not username or not password or not confirmation:
-            return render_template("form.html", type="register", error="Missing Inputs")
+            return render_template("form.html", 
+                                    type="register", 
+                                    error="Missing Inputs")
 
         # Ensure passwords match
         elif request.form.get("password") != request.form.get("confirmation"):
-            return render_template("form.html", type="register", error="Passwords Don't Match")
+            return render_template("form.html", 
+                                    type="register", 
+                                    error="Passwords Don't Match")
 
         # Try to insert the new user
         try:
@@ -116,7 +130,10 @@ def register():
                            (username, generate_password_hash(password)))
                 conn.commit()
         except sqlite3.IntegrityError:
-            return render_template("form.html", type="register", error="Username Already Taken")
+            # If username isn't available
+            return render_template("form.html", 
+                                    type="register", 
+                                    error="Username Already Taken")
 
         # Redirect user to login page
         return redirect("/login")
@@ -140,7 +157,8 @@ def chat(chat_id):
     with sqlite3.connect("app.db") as conn:
             db = conn.cursor()
             # Check if access to chat is authorized
-            db.execute("SELECT user_id FROM members WHERE chat_id = ?", (chat_id,))
+            db.execute("SELECT user_id FROM members WHERE chat_id = ?", 
+                        (chat_id,))
             raw = db.fetchall()
             members = []
             for member in raw:
@@ -149,14 +167,25 @@ def chat(chat_id):
                 return "Unauthorized!"
             
             # Pass username to html
-            db.execute("SELECT username FROM users WHERE id = ?", (session["user_id"],))
+            db.execute("SELECT username FROM users WHERE id = ?", 
+                        (session["user_id"],))
             username = db.fetchall()[0][0]
 
-            # Load all chat messages
-            db.execute("SELECT username, message FROM messages WHERE chat_id = ?", (chat_id,))
-            messages = db.fetchall()
+            # Get all chat messages
+            db.execute('''SELECT datetime, username, message FROM messages 
+                        WHERE chat_id = ? LIMIT 100''', 
+                        (chat_id,))
+            raw_messages = db.fetchall()
+            messages = []
+            # Format the datetime
+            for message in raw_messages:
+                messages.append([f"{datetime.datetime.fromisoformat(message[0])}",
+                                message[1],
+                                message[2]])
     
-    return render_template("chat.html", username=username, messages=messages, chat_id=chat_id)
+    return render_template("chat.html", 
+                            username=username, 
+                            messages=messages)
 
 @app.route("/new_chat", methods=["GET", "POST"])
 @login_required
@@ -166,23 +195,34 @@ def new_chat():
 
         # Ensure everything is submitted
         if not chat_name:
-            return render_template("form.html", type="new_chat", error="Missing Inputs")
+            return render_template("form.html", 
+                                    type="new_chat", 
+                                    error="Missing Inputs")
 
-        # Create new chat
         with sqlite3.connect("app.db") as conn:
             db = conn.cursor()
-            # Check if the name is available
+            # Check if the chat name is available
             db.execute("SELECT * FROM chats WHERE name = ?", (chat_name,))
             chats = db.fetchall()
             if len(chats) != 0:
-                return render_template("form.html", type="new_chat", error="Chat Name Is Already Taken")
+                return render_template("form.html", 
+                                        type="new_chat", 
+                                        error="Chat Name Is Already Taken")
+                                        
+            # Create new chat and add the creator as a member
             db.execute("INSERT INTO chats(name) VALUES(?)", (chat_name,))
             db.execute("SELECT id FROM chats WHERE name = ?", (chat_name,))
             chat_id = db.fetchall()[0][0]
-            db.execute("SELECT username FROM users WHERE id = ?", (session["user_id"],))
+            db.execute("SELECT username FROM users WHERE id = ?", 
+                        (session["user_id"],))
             username = db.fetchall()[0][0]
-            db.execute("INSERT INTO members(chat_id, user_id) VALUES(?, ?)", (chat_id, session["user_id"]))
-            db.execute("INSERT INTO messages(chat_id, username, message) VALUES(?, ?, ?)", (chat_id, "Server", f"{username} created the group chat {chat_name}"))
+            db.execute("INSERT INTO members(chat_id, user_id) VALUES(?, ?)",
+                        (chat_id, session["user_id"]))
+            date = format_date(datetime.datetime.now())
+            db.execute('''INSERT INTO messages(chat_id, username, message, datetime) 
+                        VALUES(?, ?, ?, ?)''', 
+                        (chat_id, "Server", 
+                        f"{username} created the group chat {chat_name}", date))
 
         return redirect("/")
     else:
@@ -193,7 +233,8 @@ def new_chat():
 def user_settings():
     with sqlite3.connect("app.db") as conn:
         db = conn.cursor()
-        db.execute("SELECT username FROM users WHERE id = ?", (session["user_id"],))
+        db.execute("SELECT username FROM users WHERE id = ?", 
+                    (session["user_id"],))
         username = db.fetchall()[0][0]
     return render_template("user_settings.html", username=username)
 
@@ -203,7 +244,8 @@ def change_password():
     if request.method == "POST":
         with sqlite3.connect("app.db") as conn:
             db = conn.cursor()
-            db.execute("SELECT hash FROM users WHERE id = ?", (session["user_id"],))
+            db.execute("SELECT hash FROM users WHERE id = ?", 
+                        (session["user_id"],))
             actual_hash = db.fetchall()[0][0]
         
         old_password = request.form.get("old_password")
@@ -212,20 +254,28 @@ def change_password():
 
         # Ensure everything was submitted
         if not old_password or not new_password or not confirmation:
-            return render_template("form.html", type="change_password", error="Missing Inputs")
+            return render_template("form.html", 
+                                    type="change_password", 
+                                    error="Missing Inputs")
         
         # Ensure correct password
         if not check_password_hash(actual_hash, old_password):
-            return render_template("form.html", type="change_password", error="Incorrect Password")
+            return render_template("form.html", 
+                                    type="change_password", 
+                                    error="Incorrect Password")
         
         #Ensure new passwords match
         if new_password != confirmation:
-            return render_template("form.html", type="change_password", error="New Passwords Don't Match")
+            return render_template("form.html", 
+                                    type="change_password", 
+                                    error="New Passwords Don't Match")
 
         # Change password
         with sqlite3.connect("app.db") as conn:
             db = conn.cursor()
-            db.execute("UPDATE users SET hash = ? WHERE id = ?", (generate_password_hash(new_password), session["user_id"]))
+            db.execute("UPDATE users SET hash = ? WHERE id = ?", 
+                        (generate_password_hash(new_password), 
+                        session["user_id"]))
 
         return redirect("/logout")
 
@@ -238,7 +288,8 @@ def change_username():
     if request.method == "POST":
         with sqlite3.connect("app.db") as conn:
             db = conn.cursor()
-            db.execute("SELECT hash FROM users WHERE id = ?", (session["user_id"],))
+            db.execute("SELECT hash FROM users WHERE id = ?", (
+                        session["user_id"],))
             actual_hash = db.fetchall()[0][0]
 
         new_username = request.form.get("new_username")
@@ -247,28 +298,38 @@ def change_username():
 
         # Ensure everything was submitted
         if not new_username or not password or not confirmation:
-            return render_template("form.html", type="change_username", error="Missing Inputs")
+            return render_template("form.html", 
+                                    type="change_username", 
+                                    error="Missing Inputs")
         
         # Ensure correct password
         if not check_password_hash(actual_hash, password):
-            return render_template("form.html", type="change_username", error="Incorrect Password")
+            return render_template("form.html", 
+                                    type="change_username", 
+                                    error="Incorrect Password")
         
         #Ensure new passwords match
         if password != confirmation:
-            return render_template("form.html", type="change_username", error="Passwords Don't Match")
+            return render_template("form.html", 
+                                    type="change_username", 
+                                    error="Passwords Don't Match")
 
         # Ensure username doesn't already exist
         with sqlite3.connect("app.db") as conn:
             db = conn.cursor()
-            db.execute("SELECT * FROM users WHERE username = ?", (new_username,))
+            db.execute("SELECT * FROM users WHERE username = ?", 
+                        (new_username,))
             usernames = db.fetchall()
             if len(usernames) != 0:
-                return render_template("form.html", type="change_username", error="Username Already Taken")
+                return render_template("form.html", 
+                                        type="change_username", 
+                                        error="Username Already Taken")
 
         # Change username
         with sqlite3.connect("app.db") as conn:
             db = conn.cursor()
-            db.execute("UPDATE users SET username = ? WHERE id = ?", (new_username, session["user_id"]))
+            db.execute("UPDATE users SET username = ? WHERE id = ?", 
+                        (new_username, session["user_id"]))
 
         return redirect("/logout")
     else:
@@ -288,11 +349,16 @@ def handle_custom_message(data):
     # Add message to DB
     with sqlite3.connect("app.db") as conn:
         db = conn.cursor()
-        db.execute("SELECT username FROM users WHERE id = ?", (session["user_id"],))
+        db.execute("SELECT username FROM users WHERE id = ?", 
+                    (session["user_id"],))
         username = db.fetchall()[0][0]
         data["username"] = username
-        sql = (chat_id, username, data["message"])
-        db.execute("INSERT INTO messages(chat_id, username, message) VALUES(?, ?, ?)", sql)
+        date = format_date(datetime.datetime.now())
+        data["datetime"] = f"{datetime.datetime.fromisoformat(date)}"
+        sql = (chat_id, username, data["message"], date)
+        db.execute('''INSERT INTO messages
+                    (chat_id, username, message, datetime) 
+                    VALUES(?, ?, ?, ?)''', sql)
 
     # Send the message to everyone in the chat
     emit("custom_response", data, broadcast=True)
@@ -306,13 +372,18 @@ def handle_leave_chat(data):
     with sqlite3.connect("app.db") as conn:
         db = conn.cursor()
         # Get username
-        db.execute("SELECT username FROM users WHERE id = ?", (session["user_id"],))
+        db.execute("SELECT username FROM users WHERE id = ?", 
+                    (session["user_id"],))
         username = db.fetchall()[0][0]
         # Delete user from chat members
-        db.execute("DELETE FROM members WHERE chat_id = ? AND user_id = ?", (chat_id, session["user_id"]))
+        db.execute("DELETE FROM members WHERE chat_id = ? AND user_id = ?", 
+                    (chat_id, session["user_id"]))
 
         # Send message to chat saying that a user left
-        db.execute("INSERT INTO messages(chat_id, username, message) VALUES(?, ?, ?)", (chat_id, "Server", f"{username} left the chat"))
+        date = format_date(datetime.datetime.now())
+        db.execute('''INSERT INTO messages(chat_id, username, message, datetime) 
+                    VALUES(?, ?, ?, ?)''', 
+                    (chat_id, "Server", f"{username} left the chat", date))
         
         # Check if there are any members left
         db.execute("SELECT user_id FROM members WHERE chat_id = ?", (chat_id,))
@@ -323,43 +394,64 @@ def handle_leave_chat(data):
             db.execute("DELETE FROM messages WHERE chat_id = ?", (chat_id,))
 
     # Send the message to everyone in the chat
-    emit("custom_response", { "username": "Server", "message": f"{username} left the chat"}, broadcast=True)
+    emit("custom_response", 
+        { 
+            "username": "Server", 
+            "message": f"{username} left the chat",
+            "datetime": f"{datetime.datetime.fromisoformat(date)}"
+        }, broadcast=True)
 
 @socketio.on('add_user')
 @login_required
 def handle_add_user(data):
-    if not data["user_id"] or not data["chat"]:
+    # Ensure everything was submitted
+    if not data["username"] or not data["chat"]:
         emit("custom_error_add", { "error": "Missing Inputs" })
         return
 
-    user_id = data["user_id"]
+    username = data["username"]
     chat_id = data["chat"].replace("/", "")
 
     with sqlite3.connect("app.db") as conn:
         db = conn.cursor()
+        # Check that user exists
+        db.execute("SELECT id FROM users WHERE username = ?", (username,))
+        users = db.fetchall()
+        if len(users) != 1:
+            emit("custom_error_add", { "error": "User Doesn't Exist" })
+            return
+        user_id = users[0][0]
+
         # Check if user is already in chat
-        db.execute("SELECT * FROM members WHERE user_id = ? AND chat_id = ?", (user_id, chat_id))
+        db.execute("SELECT * FROM members WHERE user_id = ? AND chat_id = ?", 
+                    (user_id, chat_id))
         exists = db.fetchall()
         if len(exists) != 0:
             emit("custom_error_add", { "error": "User already in chat" })
             return
         
         # Add User to members table
-        db.execute("SELECT username FROM users WHERE id = ?", (user_id,))
-        username = db.fetchall()
-        if len(username) != 1:
-            emit("custom_error_add", { "error": "User Doesn't Exist" })
-            return
-        db.execute("INSERT INTO members(chat_id, user_id) VALUES(?, ?)", (chat_id, user_id))
+        db.execute("INSERT INTO members(chat_id, user_id) VALUES(?, ?)", 
+                    (chat_id, user_id))
 
         # Send message to chat that a member has joined
-        db.execute("INSERT INTO messages(chat_id, username, message) VALUES(?, ?, ?)", (chat_id, "Server", f"{username[0][0]} joined the chat."))
-        emit("custom_response", { "username": "Server", "message": f"{username[0][0]} joined the chat."}, broadcast=True)
+        date = format_date(datetime.datetime.now())
+        db.execute('''INSERT INTO messages(chat_id, username, message, datetime) 
+                    VALUES(?, ?, ?, ?)''', 
+                    (chat_id, "Server", 
+                    f"{username} joined the chat", date))
+        emit("custom_response", 
+            { 
+                "username": "Server", 
+                "message": f"{username} joined the chat",
+                "datetime": f"{datetime.datetime.fromisoformat(date)}"
+            }, broadcast=True)
         emit("reload")
 
 @socketio.on('change_chat_name')
 @login_required
 def handle_change_chat_name(data):
+    # Ensure everything was submitted
     if not data["new_name"] or not data["chat"]:
         emit("custom_error_change", { "error": "Missing Inputs" })
         return
@@ -371,17 +463,27 @@ def handle_change_chat_name(data):
         db = conn.cursor()
         
         # Change chat name
-        db.execute("UPDATE chats SET name = ? WHERE id = ?", (new_name, chat_id))
+        db.execute("UPDATE chats SET name = ? WHERE id = ?", 
+                    (new_name, chat_id))
         # Check who changed the name
-        db.execute("SELECT username FROM users WHERE id = ?", (session["user_id"],))
+        db.execute("SELECT username FROM users WHERE id = ?", 
+                    (session["user_id"],))
         username = db.fetchall()[0][0]
 
         # Send message to chat that the name was changed
-        db.execute("INSERT INTO messages(chat_id, username, message) VALUES(?, ?, ?)", (chat_id, "Server", f"{username} changed the chat name to {new_name}"))
-        emit("custom_response", { "username": "Server", "message": f"{username} changed the chat name to {new_name}" }, broadcast=True)
+        date = format_date(datetime.datetime.now())
+        db.execute('''INSERT INTO messages(chat_id, username, message, datetime) 
+                    VALUES(?, ?, ?, ?)''', 
+                    (chat_id, "Server", 
+                    f"{username} changed the chat name to {new_name}", date))
+        emit("custom_response", 
+            { 
+                "username": "Server", 
+                "message": f"{username} changed the chat name to {new_name}", 
+                "datetime": f"{datetime.datetime.fromisoformat(date)}"
+            }, broadcast=True)
         emit("reload")
 
-
-
 if __name__ == '__main__':
+    init_db()
     socketio.run(app, '0.0.0.0', 5000)

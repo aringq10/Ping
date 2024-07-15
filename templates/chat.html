@@ -21,16 +21,28 @@
     <div id="wrapper">
         <div id="messages">
             {% for message in messages %}
-                {% if message[0] == username %}
+                {% if message[1] == username %}
                     {% set divClass = 'right' %}
-                {% elif message[0] == 'Server' %}
+                {% elif message[1] == 'Server' %}
                     {% set divClass = 'middle' %}
                     {% set serverVar = 'server' %}
                 {% else %}
                     {% set divClass = 'left' %}
                 {% endif %}
-                <div class="message {{ divClass }}">
-                    <div class="messageBox {{ serverVar }}"><b>{{ message[0] }}:</b> {{ message[1] }}</div>
+                <div class="message">
+                    <div class="messageWrapper">
+                        <div class="messageTime">
+                            <div>{{ message[0][5:10] }}</div>
+                            <div>{{ message[0][11:16] }}</div>
+                        </div>
+                        <div class="messageBoxWrapper {{ divClass }}">
+                            <div class="messageBox {{ serverVar }}">
+                                <b>{{ message[1] }}:</b>
+                                <br>
+                                <p>{{ message[2] }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             {% endfor %}
         </div>
@@ -41,7 +53,7 @@
         <button type="submit">Send</button>
     </form>
 
-    <input id = "username" type="hidden" value="{{ username }}">
+    <input id = "my_username" type="hidden" value="{{ username }}">
 </div>
 
 <div id="settings">
@@ -56,7 +68,7 @@
 
     <h1>Add user to groupchat</h1>
     <form method="post" id="add_user">
-        <input type="text" id="user_id" placeholder="User ID" autocomplete="off">
+        <input type="text" id="username" placeholder="Username" autocomplete="off">
         <button type="submit">Add User</button>
         <div class="error" id="error_add"></div>
     </form>

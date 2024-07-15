@@ -10,7 +10,6 @@
     overflow: hidden scroll;
     display: flex;
     flex-flow: column nowrap;
-    align-items: flex-end;
 }
 #messages {
     width: 100%;
@@ -20,6 +19,24 @@
     width: 100%;
     display: flex;
     padding: 10px;
+}
+.messageWrapper {
+    width: 100%;
+    display: flex;
+    flex-flow: column nowrap;
+    gap: 10px;
+}
+.messageBoxWrapper {
+    width: 100%;
+    display: flex;
+}
+.messageTime {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+}
+.messageTime > div {
+    text-align: center;
 }
 .messageBox {
     max-width: 50%;

@@ -20,7 +20,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("chatbox");
     const input = document.getElementById("input");
     const messages = document.getElementById("messages");
-    const username = document.getElementById("username").value;
+    const my_username = document.getElementById("my_username").value;
     // scroll chat to bottoms
     messages.scrollIntoView({ block: 'end' })
 
@@ -28,7 +28,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const leave_form = document.getElementById("leave");
     const add_user_form = document.getElementById("add_user");
     const change_chat_name = document.getElementById("change_chat_name");
-    const user_id = document.getElementById("user_id");
+    const username = document.getElementById("username");
     const chat_name = document.getElementById("chat_name");
 
     // Send message
@@ -46,20 +46,30 @@ window.addEventListener("DOMContentLoaded", () => {
     socket.addEventListener("custom_response", data => {
         let divClass, serverVar;
         switch (data.username) {
-            case username:
-                divClass = 'message right';
+            case my_username:
+                divClass = 'right';
                 break;
             case 'Server':
-                divClass = 'message middle';
+                divClass = 'middle';
                 serverVar = 'server';
                 break;
             default:
-                divClass = 'message left';
+                divClass = 'left';
         }
 
-        messages.innerHTML += `<div class='${divClass}'>
-                                    <div class="messageBox ${serverVar}">
-                                        <b>${data.username}</b>: ${data.message}
+        messages.innerHTML += `<div class='message'>
+                                    <div class="messageWrapper">
+                                        <div class="messageTime">
+                                            <div>${data.datetime.slice(5, 10)}</div>
+                                            <div>${data.datetime.slice(11, 16)}</div>
+                                        </div>
+                                        <div class="messageBoxWrapper ${divClass}">
+                                            <div class="messageBox ${serverVar}">
+                                                <b>${data.username}:</b>
+                                                <br>
+                                                <p>${data.message}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>`;
         // scroll chat to bottom
@@ -92,7 +102,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // Add new user to chat
     add_user_form.addEventListener("submit", e => {
-        socket.emit('add_user', { user_id: user_id.value, chat: window.location.pathname })
+        socket.emit('add_user', { username: username.value, chat: window.location.pathname })
         e.preventDefault();
     });
 
