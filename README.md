@@ -1,5 +1,5 @@
 # Ping
-## Video Demo:  <URL HERE>
+## Video Demo:  <https://youtu.be/-caYETzEq0c>
 ## Description:
 **Ping** is a basic messenger app I've created as my final project for CS50x. It incorporates the fundamental features of a messenger app such as creating and logging in via an account, creating new chats, instant messaging etc.\
 **Flask**, **SQLite** and **flask-socketio** were used to build this app.
