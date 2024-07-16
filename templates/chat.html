@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block main %}
+<!-- Chat UI -->
 <div id="chat">
     <nav>
         <a href="/">Back</a>
@@ -55,11 +56,18 @@
 
     <input id = "my_username" type="hidden" value="{{ username }}">
 </div>
-
+<!-- Chat settings tab -->
 <div id="settings">
     <nav>
         <button id="back">Back</button>
     </nav>
+
+    <h1>Members</h1>
+    <div id="members">
+        {% for member in members %}
+            <div><b>"{{ member[0] }}"</b></div>
+        {% endfor %}
+    </div>
     
     <h1>Leave Chat</h1>
     <form method="post" id="leave">

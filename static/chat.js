@@ -1,7 +1,7 @@
 window.addEventListener("DOMContentLoaded", () => {
     var socket = io();
 
-    // toggle between chat and settings
+    // toggle between chat and settings tab
     const settings_button = document.getElementById("chatSettings");
     const back_button = document.getElementById("back");
     const chat = document.getElementById("chat");
@@ -21,7 +21,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const input = document.getElementById("input");
     const messages = document.getElementById("messages");
     const my_username = document.getElementById("my_username").value;
-    // scroll chat to bottoms
+    // scroll to the bottom of chat on page reload
     messages.scrollIntoView({ block: 'end' })
 
     // settings tab
@@ -36,7 +36,8 @@ window.addEventListener("DOMContentLoaded", () => {
         const message = input.value;
 
         if (message) {
-            socket.emit('custom_message', { message: message, chat: window.location.pathname })
+            socket.emit('custom_message', 
+                        { message: message, chat: window.location.pathname })
             input.value = '';
         }
         e.preventDefault()
@@ -72,11 +73,11 @@ window.addEventListener("DOMContentLoaded", () => {
                                         </div>
                                     </div>
                                 </div>`;
-        // scroll chat to bottom
+        // scroll to the bottom of chat
         messages.scrollIntoView({ block: 'end' })
     });
 
-    // Error events
+    // Error events for add_user and change_chat_name forms respectively
     socket.addEventListener("custom_error_add", data => {
         err = data.error;
         error = document.getElementById("error_add");
@@ -89,6 +90,7 @@ window.addEventListener("DOMContentLoaded", () => {
         error.innerHTML = err;
         error.style.display = "block";
     });
+    // Page reload event after a new user has been added
     socket.addEventListener("reload", () => {
         location.reload();
     });

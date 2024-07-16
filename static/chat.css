@@ -84,8 +84,12 @@
     flex-direction: column;
 }
 
-#settings > form {
+#settings > form, #settings > #members {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+#members > div {
+    text-align: center;
 }
