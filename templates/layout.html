@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="../static/styles.css">
+    <link rel="stylesheet" href="{{ url_for("bp.static", filename="styles.css") }}">
     {% block script %}{% endblock %}
     {% block stylesheet %}{% endblock %}
     <title>{% block title %}{% endblock %}</title>
-</head>
-<body>
+  </head>
+  <body>
     {% block main %}{% endblock %}
-</body>
+  </body>
 </html>

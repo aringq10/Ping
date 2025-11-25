@@ -1,91 +1,93 @@
 {% extends "layout.html" %}
 
 {% block script %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-    <script src="../static/chat.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+  <script src="{{ url_for("bp.static", filename="chat.js") }}" defer></script>
 {% endblock %}
 {% block stylesheet %}
-    <link rel="stylesheet" href="../static/chat.css">
+  <link rel="stylesheet" href="{{ url_for("bp.static", filename="chat.css") }}">
 {% endblock %}
 
 {% block title %}
-    Chat
+  Chat
 {% endblock %}
 
 {% block main %}
 <!-- Chat UI -->
 <div id="chat">
-    <nav>
-        <a href="/">Back</a>
-        <button id="chatSettings">Chat Settings</button>
-    </nav>
-    <div id="wrapper">
-        <div id="messages">
-            {% for message in messages %}
-                {% if message[1] == username %}
-                    {% set divClass = 'right' %}
-                {% elif message[1] == 'Server' %}
-                    {% set divClass = 'middle' %}
-                    {% set serverVar = 'server' %}
-                {% else %}
-                    {% set divClass = 'left' %}
-                {% endif %}
-                <div class="message">
-                    <div class="messageWrapper">
-                        <div class="messageTime">
-                            <div>{{ message[0][5:10] }}</div>
-                            <div>{{ message[0][11:16] }}</div>
-                        </div>
-                        <div class="messageBoxWrapper {{ divClass }}">
-                            <div class="messageBox {{ serverVar }}">
-                                <b>{{ message[1] }}:</b>
-                                <br>
-                                <p>{{ message[2] }}</p>
-                            </div>
-                        </div>
-                    </div>
+  <nav>
+    <a href="{{ url_for('bp.index') }}">Back</a>
+    <button id="chatSettings">Chat Settings</button>
+  </nav>
+  <div id="wrapper">
+    <div id="messages">
+      {% for message in messages %}
+        {% if message[1] == username %}
+          {% set divClass = 'right' %}
+        {% elif message[1] == 'Server' %}
+          {% set divClass = 'middle' %}
+          {% set serverVar = 'server' %}
+        {% else %}
+          {% set divClass = 'left' %}
+        {% endif %}
+          <div class="message">
+            <div class="messageWrapper">
+              <div class="messageTime">
+                <div>{{ message[0][5:10] }}</div>
+                <div>{{ message[0][11:16] }}</div>
+              </div>
+              <div class="messageBoxWrapper {{ divClass }}">
+                <div class="messageBox {{ serverVar }}">
+                  <b>{{ message[1] }}:</b>
+                  <br>
+                  <p>{{ message[2] }}</p>
                 </div>
-            {% endfor %}
-        </div>
+              </div>
+            </div>
+          </div>
+      {% endfor %}
     </div>
+  </div>
 
-    <form id="chatbox" method="post">
-        <textarea id="input" autocomplete="off" autofocus></textarea>
-        <button type="submit">Send</button>
-    </form>
+  <form id="chatbox" method="post">
+    <textarea id="input" autocomplete="off" autofocus></textarea>
+    <button type="submit">Send</button>
+  </form>
 
-    <input id = "my_username" type="hidden" value="{{ username }}">
+  <input id = "my_username" type="hidden" value="{{ username }}">
 </div>
+
 <!-- Chat settings tab -->
 <div id="settings">
-    <nav>
-        <button id="back">Back</button>
-    </nav>
+  <div id="config" data-root-path="{{ root_path }}" data-chat-id="{{ chat_id }}" style="display: none;"></div>
+  <nav>
+    <button id="back">Back</button>
+  </nav>
 
-    <h1>Members</h1>
-    <div id="members">
-        {% for member in members %}
-            <div><b>"{{ member[0] }}"</b></div>
-        {% endfor %}
-    </div>
+  <h1>Members</h1>
+  <div id="members">
+    {% for member in members %}
+      <div><b>"{{ member[0] }}"</b></div>
+    {% endfor %}
+  </div>
     
-    <h1>Leave Chat</h1>
-    <form method="post" id="leave">
-        <button type="submit">Leave Chat</button>
-    </form>
+  <h1>Leave Chat</h1>
+  <form method="post" id="leave">
+    <button type="submit">Leave Chat</button>
+  </form>
 
-    <h1>Add user to groupchat</h1>
-    <form method="post" id="add_user">
-        <input type="text" id="username" placeholder="Username" autocomplete="off">
-        <button type="submit">Add User</button>
-        <div class="error" id="error_add"></div>
-    </form>
-    <h1>Change chat name</h1>
-    <form method="post" id="change_chat_name">
-        <input type="text" id="chat_name" placeholder="New Name" autocomplete="off">
-        <button type="submit">Change chat name</button>
-        <div class="error" id="error_change"></div>
-    </form>
+  <h1>Add user to groupchat</h1>
+  <form method="post" id="add_user">
+    <input type="text" id="username" placeholder="Username" autocomplete="off">
+    <button type="submit">Add User</button>
+    <div class="error" id="error_add"></div>
+  </form>
+  <h1>Change chat name</h1>
+  <form method="post" id="change_chat_name">
+  <input type="text" id="chat_name" placeholder="New Name" autocomplete="off">
+    <button type="submit">Change chat name</button>
+    <div class="error" id="error_change"></div>
+  </form>
 </div>
 
 {% endblock %}

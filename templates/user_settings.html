@@ -1,24 +1,24 @@
 {% extends "layout.html" %}
 
 {% block stylesheet %}
-    <link rel="stylesheet" href="../static/home.css">
+  <link rel="stylesheet" href="{{ url_for("bp.static", filename="home.css") }}">
 {% endblock %}
 
 {% block title %}
-    User Settings
+  User Settings
 {% endblock %}
 
 {% block main %}
 
 <nav>
-    <a href="/">Back</a>
+  <a href="{{ url_for('bp.index') }}">Back</a>
 </nav>
 
 <div id="options">
-    <div>Your username is <b>"{{ username }}"</b></div>
-    <div>Your user ID is <b>{{ session["user_id"] }}</b></div>
-    <a href="/change_password">Change Password</a>
-    <a href="/change_username">Change Username</a>
+  <div>Your username is <b>"{{ username }}"</b></div>
+  <div>Your user ID is <b>{{ session["user_id"] }}</b></div>
+  <a href="{{ url_for('bp.change_password') }}">Change Password</a>
+  <a href="{{ url_for('bp.change_username') }}">Change Username</a>
 </div>
 
 {% endblock %}

@@ -1,13 +1,15 @@
 :root {
     --bg: #222;
     --sec: #111;
-    --theme: #168AFF;
+    --theme: #9C27B0;
+    --text: #ffffff;
+    --error: #ff0000;
 }
 
 * {
     box-sizing: border-box;
     font-family: Arial, Helvetica, sans-serif;
-    color: white;
+    color: var(--text)
 }
 /* general */
 body, html {
@@ -42,7 +44,7 @@ nav > a:hover {
 }
 
 .error {
-    color: red;
+    color: var(--error)
 }
 
 button, input, a, textarea {

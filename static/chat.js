@@ -30,6 +30,8 @@ window.addEventListener("DOMContentLoaded", () => {
     const change_chat_name = document.getElementById("change_chat_name");
     const username = document.getElementById("username");
     const chat_name = document.getElementById("chat_name");
+    const chat_id = document.getElementById("config").dataset.chatId;
+    const root_path = document.getElementById("config").dataset.rootPath;
 
     // Send message
     form.addEventListener("submit", e => {
@@ -37,7 +39,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
         if (message) {
             socket.emit('custom_message', 
-                        { message: message, chat: window.location.pathname })
+                { message: message, chat: chat_id })
             input.value = '';
         }
         e.preventDefault()
@@ -97,20 +99,20 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // Leave chat
     leave_form.addEventListener("submit", e => {
-        socket.emit('leave_chat', { chat: window.location.pathname })
-        window.location.href = '/';
+        socket.emit('leave_chat', { chat: chat_id })
+        window.location.href = root_path;
         e.preventDefault();
     });
 
     // Add new user to chat
     add_user_form.addEventListener("submit", e => {
-        socket.emit('add_user', { username: username.value, chat: window.location.pathname })
+        socket.emit('add_user', { username: username.value, chat: chat_id })
         e.preventDefault();
     });
 
     // Change chat name
     change_chat_name.addEventListener("submit", e => {
-        socket.emit('change_chat_name', { new_name: chat_name.value, chat: window.location.pathname });
+        socket.emit('change_chat_name', { new_name: chat_name.value, chat: chat_id });
         e.preventDefault();
     });
 });

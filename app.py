@@ -1,35 +1,32 @@
 #!/usr/bin/env python
 
 import datetime
-import json
 import sqlite3
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Blueprint, Flask, redirect, render_template, request, session, url_for
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_socketio import SocketIO, send, emit
-
 from helpers import login_required, init_db, format_date
 
 # Configure IP and PORT on which the application will run
 IP = '0.0.0.0'
 PORT = 5000
 
-# Configure app and SocketIO
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
-
-# Configure session to use filesystem (instead of signed cookies)
-app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
+# Define a custom route prefix
+bp = Blueprint(
+    "bp",
+    __name__,
+    url_prefix="/ping",
+    static_folder="static"
+)
 
 # Configure user session to 30 minutes
-@app.before_request
+@bp.before_request
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = datetime.timedelta(minutes=30)
 
-@app.after_request
+@bp.after_request
 def after_request(response):
     """Ensure responses aren't cached"""
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -38,7 +35,7 @@ def after_request(response):
     return response
 
 # VIEW ROUTES
-@app.route("/register", methods=["GET", "POST"])
+@bp.route("/register", methods=["GET", "POST"])
 def register():
     # Register user
     username = request.form.get("username")
@@ -72,12 +69,12 @@ def register():
                                     error="Username Already Taken")
 
         # Redirect user to login page
-        return redirect("/login")
+        return redirect(url_for("bp.login"))
 
     else:
         return render_template("form.html", type="register")
 
-@app.route("/login", methods=["GET", "POST"])
+@bp.route("/login", methods=["GET", "POST"])
 def login():
     # Log user in
 
@@ -111,12 +108,12 @@ def login():
         session["user_id"] = rows[0][0]
 
         # Redirect user to home page
-        return redirect("/")
+        return redirect(url_for("bp.index"))
 
     else:
         return render_template("form.html", type="login")
 
-@app.route("/")
+@bp.route("/")
 @login_required
 def index():
     # Display all chats
@@ -145,9 +142,9 @@ def index():
     # Render home page
     return render_template("index.html", chats=chats_processed)
 
-@app.route("/settings")
+@bp.route("/settings")
 @login_required
-def user_settings():
+def settings():
     with sqlite3.connect("app.db") as conn:
         db = conn.cursor()
         db.execute("SELECT username FROM users WHERE id = ?", 
@@ -155,7 +152,7 @@ def user_settings():
         username = db.fetchall()[0][0]
     return render_template("user_settings.html", username=username)
 
-@app.route("/change_password", methods=["GET", "POST"])
+@bp.route("/change_password", methods=["GET", "POST"])
 @login_required
 def change_password():
     if request.method == "POST":
@@ -194,12 +191,12 @@ def change_password():
                         (generate_password_hash(new_password), 
                         session["user_id"]))
 
-        return redirect("/logout")
+        return redirect(url_for("bp.logout"))
 
     else:
         return render_template("form.html", type="change_password")
 
-@app.route("/change_username", methods=["GET", "POST"])
+@bp.route("/change_username", methods=["GET", "POST"])
 @login_required
 def change_username():
     if request.method == "POST":
@@ -248,11 +245,11 @@ def change_username():
             db.execute("UPDATE users SET username = ? WHERE id = ?", 
                         (new_username, session["user_id"]))
 
-        return redirect("/logout")
+        return redirect(url_for("bp.logout"))
     else:
         return render_template("form.html", type="change_username")
 
-@app.route("/logout")
+@bp.route("/logout")
 def logout():
     # Log user out
 
@@ -260,9 +257,9 @@ def logout():
     session.clear()
 
     # Redirect user to login form
-    return redirect("/")
+    return redirect(url_for("bp.index"))
 
-@app.route("/new_chat", methods=["GET", "POST"])
+@bp.route("/new_chat", methods=["GET", "POST"])
 @login_required
 def new_chat():
     if request.method == "POST":
@@ -301,11 +298,11 @@ def new_chat():
                         (chat_id, "Server", 
                         f"{username} created the group chat {chat_name}", date))
 
-        return redirect("/")
+        return redirect(url_for("bp.index"))
     else:
         return render_template("form.html", type="new_chat")
 
-@app.route("/<int:chat_id>")
+@bp.route("/<int:chat_id>")
 @login_required
 def chat(chat_id):
     with sqlite3.connect("app.db") as conn:
@@ -345,9 +342,21 @@ def chat(chat_id):
                                 message[2]])
     
     return render_template("chat.html", 
-                            username=username, 
-                            messages=messages,
-                            members=members)
+                           username=username, 
+                           messages=messages,
+                           members=members,
+                           chat_id=chat_id,
+                           root_path=url_for("bp.index"))
+
+# Configure app and SocketIO
+app = Flask(__name__)
+app.register_blueprint(bp)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
+
+# Configure session to use filesystem (instead of signed cookies)
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
 
 # WEBSOCKET ROUTES
 @socketio.on('custom_message')
@@ -358,7 +367,7 @@ def handle_custom_message(data):
     if length == 0:
         return
 
-    chat_id = data["chat"].replace("/", "")
+    chat_id = data["chat"]
 
     # Add message to DB
     with sqlite3.connect("app.db") as conn:
@@ -381,7 +390,7 @@ def handle_custom_message(data):
 @login_required
 def handle_leave_chat(data):
 
-    chat_id = data["chat"].replace("/", "")
+    chat_id = data["chat"]
 
     with sqlite3.connect("app.db") as conn:
         db = conn.cursor()
@@ -424,7 +433,7 @@ def handle_add_user(data):
         return
 
     username = data["username"]
-    chat_id = data["chat"].replace("/", "")
+    chat_id = data["chat"]
 
     with sqlite3.connect("app.db") as conn:
         db = conn.cursor()
@@ -472,7 +481,7 @@ def handle_change_chat_name(data):
         return
 
     new_name = data["new_name"]
-    chat_id = data["chat"].replace("/", "")
+    chat_id = data["chat"]
 
     with sqlite3.connect("app.db") as conn:
         db = conn.cursor()

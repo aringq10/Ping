@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block stylesheet %}
-    <link rel="stylesheet" href="../static/home.css">
+  <link rel="stylesheet" href="{{ url_for("bp.static", filename="home.css") }}">
 {% endblock %}
 
 {% block title %}
@@ -11,13 +11,13 @@
 {% block main %}
 
 <nav>
-    <a href="/settings">Settings</a>
-    <a href="/logout">Logout</a>
-    <a href="/new_chat">New Chat</a>
+  <a href="{{ url_for('bp.settings') }}">Settings</a>
+  <a href="{{ url_for('bp.logout') }}">Logout</a>
+  <a href="{{ url_for('bp.new_chat') }}">New Chat</a>
 </nav>
 <div id="chats">
     {% for chat in chats %}
-        <a class="chat" href="/{{ chat['id'] }}">
+        <a class="chat" href="{{ url_for('bp.chat', chat_id=chat['id']) }}">
             <div>Chat Name: {{ chat["name"] }}</div>
             <div>Members: 
                 {% for member in chat["members"] %}
