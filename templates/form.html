@@ -1,77 +1,77 @@
 {% extends "layout.html" %}
 
 {% block stylesheet %}
-  <link rel="stylesheet" href="{{ url_for("bp.static", filename="form.css") }}">
+<link rel="stylesheet" href="{{ url_for("bp.static", filename="form.css") }}">
 {% endblock %}
 
 {% block title %}
 
-  {% if type == 'login' %}
-  Login
-  {% elif type == 'register' %}
-  Register
-  {% elif type == 'change_password' %}
-  Change Password
-  {% elif type == 'change_username' %}
-  Change Username
-  {% elif type == 'new_chat' %}
-  New Chat
-  {% endif %}
-    
+{% if type == 'login' %}
+Login
+{% elif type == 'register' %}
+Register
+{% elif type == 'change_password' %}
+Change Password
+{% elif type == 'change_username' %}
+Change Username
+{% elif type == 'new_chat' %}
+New Chat
+{% endif %}
+
 {% endblock %}
 
 {% block main %}
 
-  {% if type == 'login' %}
-    <form action="{{ url_for("bp.login") }}" method="post">
-          <input type="text" name="username" placeholder="Username" autocomplete="off" autofocus>
-          <input type="password" name="password" placeholder="Password">
-          <button type="submit">Login</button>
-          {% if error %}
-              <div class="error">{{ error }}</div>
-          {% endif %}
-          <a style="background-color: rgba(0, 0, 0, 0);" href="{{ url_for("bp.register") }}">No Account? Register</a>
-      </form>
-  {% elif type == 'register' %}
-      <form action="{{ url_for("bp.register") }}" method="post">
-          <input type="text" name="username" placeholder="Username" autocomplete="off" autofocus>
-          <input type="password" name="password" placeholder="Password">
-          <input type="password" name="confirmation" placeholder="Repeat Password">
-          <button type="submit">Register</button>
-          {% if error %}
-              <div class="error">{{ error }}</div>
-          {% endif %}
-          <a style="background-color: rgba(0, 0, 0, 0);" href="{{ url_for("bp.login") }}">Already have an account? Log In</a>
-      </form>
-  {% elif type == 'change_password' %}
-      <form action="{{ url_for("bp.change_password") }}" method="post">
-          <input type="password" name="old_password" placeholder="Old password" autofocus>
-          <input type="password" name="new_password" placeholder="New password">
-          <input type="password" name="confirmation" placeholder="Repeat new password">
-          <button type="submit">Change Password</button>
-          {% if error %}
-              <div class="error">{{ error }}</div>
-          {% endif %}
-      </form>
-
-  {% elif type == 'change_username' %}
-      <form action="{{ url_for("bp.change_username") }}" method="post">
-          <input type="text" name="new_username" placeholder="New username" autocomplete="off" autofocus>
-          <input type="password" name="password" placeholder="Password">
-          <input type="password" name="confirmation" placeholder="Repeat Password">
-          <button type="submit">Change Username</button>
-          {% if error %}
-              <div class="error">{{ error }}</div>
-          {% endif %}
-      </form>
-  {% elif type == 'new_chat' %}
-  <form action="{{ url_for("bp.new_chat") }}" method="post">
-      <input type="text" name="name" placeholder="Chat Name" autocomplete="off">
-      <button type="submit">Create New Chat</button>
-      {% if error %}
-          <div class="error">{{ error }}</div>
-      {% endif %}
-  </form>
+{% if type == 'login' %}
+<form action="{{ url_for("bp.login") }}" method="post">
+  <input type="text" name="username" placeholder="Username" autocomplete="off" autofocus>
+  <input type="password" name="password" placeholder="Password">
+  <button type="submit">Login</button>
+  {% if error %}
+  <div class="error">{{ error }}</div>
   {% endif %}
+  <a style="background-color: rgba(0, 0, 0, 0);" href="{{ url_for("bp.register") }}">No Account? Register</a>
+</form>
+{% elif type == 'register' %}
+<form action="{{ url_for("bp.register") }}" method="post">
+  <input type="text" name="username" placeholder="Username" autocomplete="off" autofocus>
+  <input type="password" name="password" placeholder="Password">
+  <input type="password" name="confirmation" placeholder="Repeat Password">
+  <button type="submit">Register</button>
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+  <a style="background-color: rgba(0, 0, 0, 0);" href="{{ url_for("bp.login") }}">Already have an account? Log In</a>
+</form>
+{% elif type == 'change_password' %}
+<form action="{{ url_for("bp.change_password") }}" method="post">
+  <input type="password" name="old_password" placeholder="Old password" autofocus>
+  <input type="password" name="new_password" placeholder="New password">
+  <input type="password" name="confirmation" placeholder="Repeat new password">
+  <button type="submit">Change Password</button>
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+</form>
+
+{% elif type == 'change_username' %}
+<form action="{{ url_for("bp.change_username") }}" method="post">
+  <input type="text" name="new_username" placeholder="New username" autocomplete="off" autofocus>
+  <input type="password" name="password" placeholder="Password">
+  <input type="password" name="confirmation" placeholder="Repeat Password">
+  <button type="submit">Change Username</button>
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+</form>
+{% elif type == 'new_chat' %}
+<form action="{{ url_for("bp.new_chat") }}" method="post">
+  <input type="text" name="name" placeholder="Chat Name" autocomplete="off">
+  <button type="submit">Create New Chat</button>
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+</form>
+{% endif %}
 
 {% endblock %}
